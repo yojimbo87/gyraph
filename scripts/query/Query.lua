@@ -1,23 +1,32 @@
 local Query = {}
 
-local parseIdentity = function (entity, index, length, queryString)
-	local char
+local parseLabel = function (entity, index, str)
+	-- loop variables
 	local i = index + 1
+	local char
 
-	-- set identity default value
-	entity["identity"] = ""
+	-- set class/label default value based on the enity type
+	if entity.type == "vertex" then
+		entity["class"] = ""
+	else
+		entity["label"] = ""
+	end
 
-	while i <= length do
-		char = queryString:sub(i, i)
+	while i <= #str do
+		char = str:sub(i, i)
 
 		if char == ')' or
-			char == ':' or
+			char == ']' or
 			char == '{' then
-			-- parse identity out of the query string
-			entity["identity"] = queryString:sub(index + 1, i - 1)
+			-- parse class/label from string
+			if entity.type == "vertex" then
+				entity["class"] = str:sub(index + 1, i - 1)
+			else
+				entity["label"] = str:sub(index + 1, i - 1)
+			end
 
 			-- record index where did the processing ended
-			entity["index"] = i
+			entity.index = i
 			break
 		end
 
@@ -26,40 +35,73 @@ local parseIdentity = function (entity, index, length, queryString)
 	end
 end
 
-local parseEntity = function (entityType, index, length, queryString)
-	local entity = {}
+local parseIdentity = function (entity, index, str)
+	-- loop variables
 	local i = index + 1
 	local char
 
-	-- determine type of the entity
+	-- set identity default value
+	entity["identity"] = ""
+
+	while i <= #str do
+		char = str:sub(i, i)
+
+		if char == ')' or
+			char == ':' or
+			char == '{' then
+			-- parse identity from string
+			entity["identity"] = str:sub(index + 1, i - 1)
+
+			-- record index where did the processing ended
+			entity.index = i
+			break
+		end
+
+		-- move forward in query string
+		i = i + 1
+	end
+end
+
+local parseEntity = function (entityType, index, str)
+	-- create new entity object with current index
+	local entity = { index = index }
+	-- loop variables
+	local i = entity.index
+	local char
+
+	-- set entity type
 	if entityType == 'v' then
 		entity["type"] = "vertex"
 	else
 		entity["type"] = "edge"
 	end
 
-	parseIdentity(entity, index, length, queryString)
+	-- try to parse identity and class/label
+	parseIdentity(entity, index, str)
 
-	while i <= length do
-		char = queryString:sub(i, i)
+	-- get character where identity parsing ended
+	char = str:sub(entity.index, entity.index)
+
+	-- parse also class/label if it follows
+	if char == ':' then
+		parseLabel(entity, entity.index, str)
+	end
+
+	while i <= #str do
+		char = str:sub(i, i)
 
 		if char == ')' then
-			entity["data"] = queryString:sub(index + 1, i - 1)
+			entity["data"] = str:sub(index + 1, i - 1)
 
 			-- record index where did the processing ended
-			entity["index"] = i
+			entity.index = i
 			break
 		elseif char == ']' then
-			entity["data"] = queryString:sub(index + 1, i - 1)
+			entity["data"] = str:sub(index + 1, i - 1)
 
 			-- record index where did the processing ended
-			entity["index"] = i
+			entity.index = i
 			break
-		--[[elseif char == ':' then
-			-- parse entity identity if present
-			if index ~= i and index ~= (i - 1) then
-				entity["identity"] = queryString:sub(index + 1, i - 1)
-			end]]
 		end
 
 		-- move forward in query string
@@ -69,40 +111,41 @@ local parseEntity = function (entityType, index, length, queryString)
 	return entity
 end
 
-local parse = function (qs)
-	local count = 1
+local parse = function (str)
 	local query = {}
-	local index = 1
-	local length = #qs
+	-- counter of parsed query objects
+	local count = 1
+	-- loop varialbes
+	local i = 1
 	local char
 
-	while index <= length do
-		char = qs:sub(index, index)
+	while i <= #str do
+		char = str:sub(i, i)
 
-		-- it's a vertex
 		if char == '(' then
-			query["obj" .. count] = parseEntity('v', index, length, qs)
-		-- it's an edge
+			-- it's a vertex
+			query["obj" .. count] = parseEntity('v', i, str)
 		elseif char == '[' then
-			query["obj" .. count] = parseEntity('e', index, length, qs)
+			-- it's an edge
+			query["obj" .. count] = parseEntity('e', i, str)
 		else
 		end
 
 		-- set i to the last index of parsed entity
-		index = query["obj" .. count].index
+		i = query["obj" .. count].index
 
 		-- increment number of parsed objects
 		count = count + 1
 
-		index = index + 1
+		i = i + 1
 	end
 
 	return query
 end
 
 
-function Query.parse(qs)
-	return parse(qs)
+function Query.parse(str)
+	return parse(str)
 end
 
 return Query
