@@ -1,5 +1,47 @@
 local Query = {}
 
+local parseDocument = function (entity, index, str)
+	-- loop variables
+	local i = index + 1
+	local char
+	local key
+	local isString = false
+
+	-- set up document table
+	entity["document"] = {}
+
+	while i <= #str do
+		char = str:sub(i, i)
+
+		if char == '}' then
+			-- end of document, so parse the last k/v pair
+			entity.document[key] = str:sub(index + 2, i - 2)
+
+			-- record index where did the processing ended
+			entity.index = i
+			break
+		elseif char == ',' then
+			-- next k/v pair follow, so parse current k/v pair
+			entity.document[key] = str:sub(index + 2, i - 2)
+			index = i
+		elseif char == ':' then
+			-- parse key
+			key = str:sub(index + 1, i - 1)
+			index = i
+		elseif char == '\'' or char == '"' then
+			-- TODO: fix case where value contains special characters that are being used during parsing
+			if isString == false then
+				isString = true
+			else
+				isstring = false
+			end
+		end
+
+		-- move forward in query string
+		i = i + 1
+	end
+end
+
 local parseLabel = function (entity, index, str)
 	-- loop variables
 	local i = index + 1
@@ -82,9 +124,17 @@ local parseEntity = function (entityType, index, str)
 	-- get character where identity parsing ended
 	char = str:sub(entity.index, entity.index)
 
-	-- parse also class/label if it follows
+	-- parse class/label if it follows
 	if char == ':' then
 		parseLabel(entity, entity.index, str)
+	end
+
+	-- get character where class/label parsing ended
+	char = str:sub(entity.index, entity.index)
+
+	-- parse document if it follows
+	if char == '{' then
+		parseDocument(entity, entity.index, str)
 	end
 
 	while i <= #str do
