@@ -75,6 +75,22 @@ assert(q.obj1.document.bar == 'baz')
 assert(q.obj1.data == "{foo:'bar',bar:'baz'}")
 assert(q.obj1.index == #s)
 
+-- test complex example which includes vertex and edge entities with documents
+s = "(a:myclass{foo1:'whoa'})[b:mylabel{bar2:'bazx'}]"
+q = query.parse(s)
+
+assert(q.obj1.type == "vertex")
+assert(q.obj1.identity == "a")
+assert(q.obj1.class == "myclass")
+assert(q.obj1.document.foo1 == 'whoa')
+assert(q.obj1.data == "a:myclass{foo1:'whoa'}")
+
+assert(q.obj2.type == "edge")
+assert(q.obj2.identity == "b")
+assert(q.obj2.label == "mylabel")
+assert(q.obj2.document.bar2 == 'bazx')
+assert(q.obj2.data == "b:mylabel{bar2:'bazx'}")
+
 print("All tests passsed")
 
 --[[for k,v in pairs(q) do
