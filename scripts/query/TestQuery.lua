@@ -1,60 +1,79 @@
 local query = require './Query'
 
 local q
+local s
 
 -- test vertex identity
-q = query.parse("(a)")
+s = "(a)"
+q = query.parse(s)
 assert(q.obj1.type == "vertex")
 assert(q.obj1.identity == "a")
 assert(q.obj1.data == "a")
-assert(q.obj1.index == 3)
+assert(q.obj1.index == #s)
 
 -- test vertex identity with class
-q = query.parse("(a:myclass)")
+s = "(a:myclass)"
+q = query.parse(s)
 assert(q.obj1.type == "vertex")
 assert(q.obj1.identity == "a")
 assert(q.obj1.class == "myclass")
 assert(q.obj1.data == "a:myclass")
-assert(q.obj1.index == 11)
+assert(q.obj1.index == #s)
 
 -- test vertex class
-q = query.parse("(:myclass)")
+s = "(:myclass)"
+q = query.parse(s)
 assert(q.obj1.type == "vertex")
 assert(q.obj1.identity == "")
 assert(q.obj1.class == "myclass")
 assert(q.obj1.data == ":myclass")
-assert(q.obj1.index == 10)
+assert(q.obj1.index == #s)
 
 -- test vertex document
-q = query.parse("({foo:'bar',bar:'baz'})")
+s = "({foo:'bar',bar:'baz'})"
+q = query.parse(s)
 assert(q.obj1.type == "vertex")
 assert(q.obj1.identity == "")
 assert(q.obj1.document.foo == 'bar')
---assert(q.obj1.data == "{foo:'bar'}")
---assert(q.obj1.index == 13)
+assert(q.obj1.document.bar == 'baz')
+assert(q.obj1.data == "{foo:'bar',bar:'baz'}")
+assert(q.obj1.index == #s)
 
 -- test vertex identity
-q = query.parse("[a]")
+s = "[a]"
+q = query.parse(s)
 assert(q.obj1.type == "edge")
 assert(q.obj1.identity == "a")
 assert(q.obj1.data == "a")
-assert(q.obj1.index == 3)
+assert(q.obj1.index == #s)
 
 -- test edge label
-q = query.parse("[:mylabel]")
+s = "[:mylabel]"
+q = query.parse(s)
 assert(q.obj1.type == "edge")
 assert(q.obj1.identity == "")
 assert(q.obj1.label == "mylabel")
 assert(q.obj1.data == ":mylabel")
-assert(q.obj1.index == 10)
+assert(q.obj1.index == #s)
 
 -- test edge identity with label
-q = query.parse("[a:mylabel]")
+s = "[a:mylabel]"
+q = query.parse(s)
 assert(q.obj1.type == "edge")
 assert(q.obj1.identity == "a")
 assert(q.obj1.label == "mylabel")
 assert(q.obj1.data == "a:mylabel")
-assert(q.obj1.index == 11)
+assert(q.obj1.index == #s)
+
+-- test edge document
+s = "[{foo:'bar',bar:'baz'}]"
+q = query.parse(s)
+assert(q.obj1.type == "edge")
+assert(q.obj1.identity == "")
+assert(q.obj1.document.foo == 'bar')
+assert(q.obj1.document.bar == 'baz')
+assert(q.obj1.data == "{foo:'bar',bar:'baz'}")
+assert(q.obj1.index == #s)
 
 print("All tests passsed")
 

@@ -1,40 +1,19 @@
 local Query = {}
 
-local parseDocument = function (entity, index, str)
+local parseValue = function (entity, key, index, str)
 	-- loop variables
 	local i = index + 1
 	local char
-	local key
-	local isString = false
-
-	-- set up document table
-	entity["document"] = {}
 
 	while i <= #str do
 		char = str:sub(i, i)
 
-		if char == '}' then
-			-- end of document, so parse the last k/v pair
-			entity.document[key] = str:sub(index + 2, i - 2)
-
-			-- record index where did the processing ended
+		if char == '"' or char == '\'' then
+			entity.document[key] = str:sub(index + 1, i - 1)
 			entity.index = i
 			break
-		elseif char == ',' then
-			-- next k/v pair follow, so parse current k/v pair
-			entity.document[key] = str:sub(index + 2, i - 2)
-			index = i
-		elseif char == ':' then
-			-- parse key
-			key = str:sub(index + 1, i - 1)
-			index = i
-		elseif char == '\'' or char == '"' then
-			-- TODO: fix case where value contains special characters that are being used during parsing
-			if isString == false then
-				isString = true
-			else
-				isstring = false
-			end
+		else
+
 		end
 
 		-- move forward in query string
@@ -42,6 +21,48 @@ local parseDocument = function (entity, index, str)
 	end
 end
 
+-- parses entity document {key:value,...}
+local parseDocument = function (entity, index, str)
+	-- loop variables
+	local i = index + 1
+	local char
+	local key
+
+	-- setup document table
+	entity["document"] = {}
+
+	while i <= #str do
+		char = str:sub(i, i)
+
+		if char == '}' then
+			-- end of document, so parse the last k/v pair
+			--entity.document[key] = str:sub(index + 2, i - 2)
+
+			-- record index where did the processing ended
+			entity.index = i
+			break
+		elseif char == ',' then
+			-- next k/v pair follow, so parse current k/v pair
+			--entity.document[key] = str:sub(index + 2, i - 2)
+			index = i
+		elseif char == ':' then
+			-- parse key
+			key = str:sub(index + 1, i - 1)
+			--print(key)
+			index = i
+		elseif char == '"' or char == '\'' then
+			-- parse value
+			--print(i)
+			parseValue(entity, key, i, str)
+			i = entity.index
+		end
+
+		-- move forward in query string
+		i = i + 1
+	end
+end
+
+-- parses entity class (a:myclass...) or edge label [a:mylabel...]
 local parseLabel = function (entity, index, str)
 	-- loop variables
 	local i = index + 1
@@ -77,6 +98,7 @@ local parseLabel = function (entity, index, str)
 	end
 end
 
+-- parses entity identity (a...) or [a...]
 local parseIdentity = function (entity, index, str)
 	-- loop variables
 	local i = index + 1
@@ -105,6 +127,7 @@ local parseIdentity = function (entity, index, str)
 	end
 end
 
+-- parses vertex (...) or edge [...] entity
 local parseEntity = function (entityType, index, str)
 	-- create new entity object with current index
 	local entity = { index = index }
