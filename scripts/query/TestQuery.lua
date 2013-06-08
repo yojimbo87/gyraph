@@ -30,8 +30,15 @@ q = query.parse("({foo:'bar',bar:'baz'})")
 assert(q.obj1.type == "vertex")
 assert(q.obj1.identity == "")
 assert(q.obj1.document.foo == 'bar')
-assert(q.obj1.data == "{foo:'bar'}")
-assert(q.obj1.index == 13)
+--assert(q.obj1.data == "{foo:'bar'}")
+--assert(q.obj1.index == 13)
+
+-- test vertex identity
+q = query.parse("[a]")
+assert(q.obj1.type == "edge")
+assert(q.obj1.identity == "a")
+assert(q.obj1.data == "a")
+assert(q.obj1.index == 3)
 
 -- test edge label
 q = query.parse("[:mylabel]")

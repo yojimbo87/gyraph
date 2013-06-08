@@ -89,6 +89,7 @@ local parseIdentity = function (entity, index, str)
 		char = str:sub(i, i)
 
 		if char == ')' or
+			char == ']' or
 			char == ':' or
 			char == '{' then
 			-- parse identity from string
