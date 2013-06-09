@@ -8,12 +8,11 @@ local parseValue = function (entity, key, index, str)
 	while i <= #str do
 		char = str:sub(i, i)
 
+		-- value parsing ends with single or double quote
 		if char == '"' or char == '\'' then
 			entity.document[key] = str:sub(index + 1, i - 1)
 			entity.index = i
 			break
-		else
-
 		end
 
 		-- move forward in query string
@@ -48,13 +47,13 @@ local parseDocument = function (entity, index, str)
 		elseif char == ':' then
 			-- parse key
 			key = str:sub(index + 1, i - 1)
-			--print(key)
 			index = i
 		elseif char == '"' or char == '\'' then
 			-- parse value
-			--print(i)
 			parseValue(entity, key, i, str)
 			i = entity.index
+		elseif char == ' ' then
+			index = index + 1
 		end
 
 		-- move forward in query string
@@ -80,6 +79,7 @@ local parseLabel = function (entity, index, str)
 
 		if char == ')' or
 			char == ']' or
+			char == ' ' or
 			char == '{' then
 			-- parse class/label from string
 			if entity.type == "vertex" then
@@ -112,6 +112,7 @@ local parseIdentity = function (entity, index, str)
 
 		if char == ')' or
 			char == ']' or
+			char == ' ' or
 			char == ':' or
 			char == '{' then
 			-- parse identity from string
@@ -131,9 +132,6 @@ end
 local parseEntity = function (entityType, index, str)
 	-- create new entity object with current index
 	local entity = { index = index }
-	-- loop variables
-	local i = entity.index
-	local char
 
 	-- set entity type
 	if entityType == 'v' then
@@ -145,41 +143,39 @@ local parseEntity = function (entityType, index, str)
 	-- try to parse identity and class/label
 	parseIdentity(entity, index, str)
 
-	-- get character where identity parsing ended
-	char = str:sub(entity.index, entity.index)
-
-	-- parse class/label if it follows
-	if char == ':' then
-		parseLabel(entity, entity.index, str)
-	end
-
-	-- get character where class/label parsing ended
-	char = str:sub(entity.index, entity.index)
-
-	-- parse document if it follows
-	if char == '{' then
-		parseDocument(entity, entity.index, str)
-	end
+	-- loop variables
+	local i = entity.index
+	local char
 
 	while i <= #str do
 		char = str:sub(i, i)
 
 		if char == ')' then
+			-- end of vertex entity
 			entity["data"] = str:sub(index + 1, i - 1)
 
 			-- record index where did the processing ended
 			entity.index = i
 			break
 		elseif char == ']' then
+			-- end of edge entity
 			entity["data"] = str:sub(index + 1, i - 1)
 
 			-- record index where did the processing ended
 			entity.index = i
 			break
+		elseif char == ':' then
+			-- label parsing follows
+			parseLabel(entity, i, str)
+			i = entity.index
+		elseif char == '{' then
+			-- document parsing follows
+			parseDocument(entity, i, str)
+			i = entity.index
+		else
+			-- move forward in query string
+			i = i + 1
 		end
-
-		-- move forward in query string
-		i = i + 1
 	end
 
 	return entity
@@ -199,19 +195,25 @@ local parse = function (str)
 		if char == '(' then
 			-- it's a vertex
 			query["obj" .. count] = parseEntity('v', i, str)
+
+			-- set i to the last index of parsed entity
+			i = query["obj" .. count].index
+
+			-- increment number of parsed objects
+			count = count + 1
 		elseif char == '[' then
 			-- it's an edge
 			query["obj" .. count] = parseEntity('e', i, str)
+
+			-- set i to the last index of parsed entity
+			i = query["obj" .. count].index
+
+			-- increment number of parsed objects
+			count = count + 1
 		else
+			-- move forward in query string
+			i = i + 1
 		end
-
-		-- set i to the last index of parsed entity
-		i = query["obj" .. count].index
-
-		-- increment number of parsed objects
-		count = count + 1
-
-		i = i + 1
 	end
 
 	return query
