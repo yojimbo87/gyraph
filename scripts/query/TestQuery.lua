@@ -8,7 +8,7 @@ s = "(a)"
 q = query.parse(s)
 assert(q.obj1.type == "vertex")
 assert(q.obj1.identity == "a")
-assert(q.obj1.data == "a")
+assert(q.obj1.data == s:sub(2, #s - 1))
 assert(q.obj1.index == #s)
 
 -- test vertex identity with class
@@ -17,7 +17,7 @@ q = query.parse(s)
 assert(q.obj1.type == "vertex")
 assert(q.obj1.identity == "a")
 assert(q.obj1.class == "myclass")
-assert(q.obj1.data == "a:myclass")
+assert(q.obj1.data == s:sub(2, #s - 1))
 assert(q.obj1.index == #s)
 
 -- test vertex class
@@ -26,17 +26,17 @@ q = query.parse(s)
 assert(q.obj1.type == "vertex")
 assert(q.obj1.identity == "")
 assert(q.obj1.class == "myclass")
-assert(q.obj1.data == ":myclass")
+assert(q.obj1.data == s:sub(2, #s - 1))
 assert(q.obj1.index == #s)
 
 -- test vertex document
-s = "({foo:'bar',bar:'baz'})"
+s = "({ foo: 'bar', bar: 'baz' })"
 q = query.parse(s)
 assert(q.obj1.type == "vertex")
 assert(q.obj1.identity == "")
 assert(q.obj1.document.foo == 'bar')
 assert(q.obj1.document.bar == 'baz')
-assert(q.obj1.data == "{foo:'bar',bar:'baz'}")
+assert(q.obj1.data == s:sub(2, #s - 1))
 assert(q.obj1.index == #s)
 
 -- test vertex identity
@@ -44,7 +44,7 @@ s = "[a]"
 q = query.parse(s)
 assert(q.obj1.type == "edge")
 assert(q.obj1.identity == "a")
-assert(q.obj1.data == "a")
+assert(q.obj1.data == s:sub(2, #s - 1))
 assert(q.obj1.index == #s)
 
 -- test edge label
@@ -53,7 +53,7 @@ q = query.parse(s)
 assert(q.obj1.type == "edge")
 assert(q.obj1.identity == "")
 assert(q.obj1.label == "mylabel")
-assert(q.obj1.data == ":mylabel")
+assert(q.obj1.data == s:sub(2, #s - 1))
 assert(q.obj1.index == #s)
 
 -- test edge identity with label
@@ -62,34 +62,32 @@ q = query.parse(s)
 assert(q.obj1.type == "edge")
 assert(q.obj1.identity == "a")
 assert(q.obj1.label == "mylabel")
-assert(q.obj1.data == "a:mylabel")
+assert(q.obj1.data == s:sub(2, #s - 1))
 assert(q.obj1.index == #s)
 
 -- test edge document
-s = "[{foo:'bar',bar:'baz'}]"
+s = "[{ foo: 'bar', bar: 'baz' }]"
 q = query.parse(s)
 assert(q.obj1.type == "edge")
 assert(q.obj1.identity == "")
 assert(q.obj1.document.foo == 'bar')
 assert(q.obj1.document.bar == 'baz')
-assert(q.obj1.data == "{foo:'bar',bar:'baz'}")
+assert(q.obj1.data == s:sub(2, #s - 1))
 assert(q.obj1.index == #s)
 
 -- test complex example which includes vertex and edge entities with documents
-s = "(a:myclass{foo1:'whoa'})[b:mylabel{bar2:'bazx'}]"
+s = "(a:myclass { foo1: 'whoa' }) [b:mylabel { bar2: 'bazx' }]"
 q = query.parse(s)
 
 assert(q.obj1.type == "vertex")
 assert(q.obj1.identity == "a")
 assert(q.obj1.class == "myclass")
 assert(q.obj1.document.foo1 == 'whoa')
-assert(q.obj1.data == "a:myclass{foo1:'whoa'}")
 
 assert(q.obj2.type == "edge")
 assert(q.obj2.identity == "b")
 assert(q.obj2.label == "mylabel")
 assert(q.obj2.document.bar2 == 'bazx')
-assert(q.obj2.data == "b:mylabel{bar2:'bazx'}")
 
 print("All tests passsed")
 
